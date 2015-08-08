@@ -1,7 +1,8 @@
 from flask import render_template, redirect, request, url_for, flash
-from flask.ext.login import login_user, logout_user, login_required
+from flask.ext.login import login_user, logout_user, login_required, current_user
 
 from ..models import User
+from ..email import send_mail
 from .forms import LoginForm, RegistrationForm
 from app import db
 
@@ -25,6 +26,17 @@ def logout():
     flash('You have been logged out.')
     return redirect(url_for('main.index'))
 
+@auth.route('/confirm/<token>')
+@login_required
+def confirm(token):
+    if current_user.confirmed:
+        return redirect(url_for('main.index'))
+    if current_user.confirm(token):
+        flash('You have confirmed account. Thanks!')
+    else:
+        flash('The confirmation link is invalid or has expired.')
+    return redirect(url_for('main.index'))
+
 @auth.route('/register', methods=["GET", "POST"])
 def register():
     form = RegistrationForm()
@@ -33,6 +45,10 @@ def register():
                     username=form.username.data,
                     password=form.password.data)
         db.session.add(user)
+        db.session.commit()
+        token = user.generate_confirmation_token()
+        send_mail(user.email, 'confirm you account', 'auth/email/confirm', user=user, token=token)
+        flash('a confirmation email has benn sent to you by email')
         flash('You can now login.')
         return redirect(url_for('auth.login'))
     return render_template('auth/register.html', form=form)
