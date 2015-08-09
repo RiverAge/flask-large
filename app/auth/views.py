@@ -15,15 +15,16 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user is not None and user.verify_password(form.password.data):
             login_user(user, form.remember_me.data)
+            flash('you have success logged in!', 'success')
             return redirect(request.args.get('next') or url_for('main.index'))
-        flash('invalid username or password')
+        flash('invalid username or password', 'danger')
     return render_template('auth/login.html', form=form)
 
 @auth.route('/logout')
 @login_required
 def logout():
     logout_user()
-    flash('You have been logged out.')
+    flash('You have been logged out.', 'info')
     return redirect(url_for('main.index'))
 
 @auth.route('/confirm/<token>')
@@ -32,9 +33,9 @@ def confirm(token):
     if current_user.confirmed:
         return redirect(url_for('main.index'))
     if current_user.confirm(token):
-        flash('You have confirmed account. Thanks!')
+        flash('You have confirmed account. Thanks!', 'success')
     else:
-        flash('The confirmation link is invalid or has expired.')
+        flash('The confirmation link is invalid or has expired.', 'warning')
     return redirect(url_for('main.index'))
 
 @auth.route('/register', methods=["GET", "POST"])
@@ -48,7 +49,7 @@ def register():
         db.session.commit()
         token = user.generate_confirmation_token()
         send_mail(user.email, 'confirm you account', 'auth/email/confirm', user=user, token=token)
-        flash('a confirmation email has benn sent to you by email')
-        flash('You can now login.')
+        flash('a confirmation email has benn sent to you by email', 'info')
+        flash('You can now login.', 'info')
         return redirect(url_for('auth.login'))
     return render_template('auth/register.html', form=form)
