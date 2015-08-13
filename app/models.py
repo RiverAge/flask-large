@@ -57,3 +57,10 @@ class User(UserMixin, db.Model):
 
     def __repr__(self):
         return '<User %>' % self.username
+
+class Permission(object):
+    FOLLOW = 0x01
+    COMMENT = 0x02
+    WRITE_ARTICLE = 0x04
+    MODERATE_COMMENT = 0x08
+    ADMINISTER = 0x80
